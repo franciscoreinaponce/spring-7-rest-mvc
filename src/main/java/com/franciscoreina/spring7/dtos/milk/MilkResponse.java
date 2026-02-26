@@ -1,0 +1,20 @@
+package com.franciscoreina.spring7.dtos.milk;
+
+import com.franciscoreina.spring7.domain.MilkType;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
+public record MilkResponse(
+        UUID id,
+        Integer version,
+        String name,
+        MilkType milkType,
+        String upc,
+        BigDecimal price,
+        Integer stock,
+        Instant createdAt,
+        Instant updatedAt
+) {
+}
