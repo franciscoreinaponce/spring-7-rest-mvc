@@ -12,9 +12,9 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -68,7 +68,7 @@ public class Milk {
     private BigDecimal price;
 
     @NotNull
-    @Min(0)
+    @PositiveOrZero
     @Column(nullable = false)
     private Integer stock;
 

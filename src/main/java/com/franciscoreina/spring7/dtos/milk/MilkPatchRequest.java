@@ -1,11 +1,9 @@
 package com.franciscoreina.spring7.dtos.milk;
 
 import com.franciscoreina.spring7.domain.MilkType;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
 import java.math.BigDecimal;
@@ -23,7 +21,7 @@ public record MilkPatchRequest(
         @Digits(integer = 10, fraction = 2)
         BigDecimal price,
 
-        @Min(0)
+        @PositiveOrZero
         Integer stock
 ) {
 }
