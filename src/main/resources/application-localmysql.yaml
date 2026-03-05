@@ -1,9 +1,11 @@
 spring:
+
   datasource:
     username: restadmin
     password: password
     url: jdbc:mysql://127.0.0.1:3306/restdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
     driver-class-name: com.mysql.cj.jdbc.Driver
+
     hikari:
       pool-name: RestDB-Pool
       maximum-pool-size: 5               # Maximum pool size (default is 10)
@@ -18,6 +20,7 @@ spring:
         cacheServerConfiguration: true   # Cache MySQL server config
         elideSetAutoCommits: true        # Skip redundant setAutoCommit calls
         maintainTimeStats: false         # Disable internal timing stats (less overhead)
+
   jpa:
     database: mysql
     hibernate:
@@ -26,8 +29,13 @@ spring:
       hibernate:
         show_sql: false     # Log SQL statements
         format_sql: false   # Format SQL output in logs
+
   flyway:
     enabled: true
+
+  docker:
+    compose:
+      enabled: true
 
 logging:
   level:
