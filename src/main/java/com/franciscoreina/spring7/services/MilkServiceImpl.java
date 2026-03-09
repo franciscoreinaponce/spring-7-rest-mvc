@@ -10,10 +10,11 @@ import com.franciscoreina.spring7.exceptions.NotFoundException;
 import com.franciscoreina.spring7.mappers.MilkMapper;
 import com.franciscoreina.spring7.repositories.MilkRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -36,32 +37,24 @@ public class MilkServiceImpl implements MilkService {
     }
 
     @Override
-    public List<MilkResponse> list(String name, MilkType milkType) {
+    public Page<MilkResponse> list(String name, MilkType milkType, Pageable pageable) {
         if (name != null && milkType != null) { // Search by name and milkType
-            return milkRepository.findAllByNameContainingIgnoreCaseAndMilkType(name, milkType)
-                    .stream()
-                    .map(milkMapper::toResponse)
-                    .toList();
+            return milkRepository.findAllByNameContainingIgnoreCaseAndMilkType(name, milkType, pageable)
+                    .map(milkMapper::toResponse);
         }
 
         if (name != null) { // Search by name
-            return milkRepository.findAllByNameContainingIgnoreCase(name)
-                    .stream()
-                    .map(milkMapper::toResponse)
-                    .toList();
+            return milkRepository.findAllByNameContainingIgnoreCase(name, pageable)
+                    .map(milkMapper::toResponse);
         }
 
         if (milkType != null) { // Search by milkType
-            return milkRepository.findAllByMilkType(milkType)
-                    .stream()
-                    .map(milkMapper::toResponse)
-                    .toList();
+            return milkRepository.findAllByMilkType(milkType, pageable)
+                    .map(milkMapper::toResponse);
         }
 
-        return milkRepository.findAll() // Search all
-                .stream()
-                .map(milkMapper::toResponse)
-                .toList();
+        return milkRepository.findAll(pageable) // Search all
+                .map(milkMapper::toResponse);
     }
 
     @Transactional

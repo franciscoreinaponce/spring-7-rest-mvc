@@ -15,15 +15,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import tools.jackson.databind.ObjectMapper;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.verify;
@@ -154,21 +159,21 @@ public class MilkControllerTest {
         // Arrange
         Milk savedMilk2 = TestDataFactory.newSavedMilk(TestDataFactory.newMilk());
         MilkResponse response2 = TestDataFactory.newMilkResponse(savedMilk2);
-        List<MilkResponse> responseList = List.of(milkResponse, response2);
+        Page<MilkResponse> responseList = new PageImpl<>(List.of(milkResponse, response2));
 
-        given(milkService.list(null, null)).willReturn(responseList);
+        given(milkService.list(isNull(), isNull(), any(Pageable.class))).willReturn(responseList);
 
         // Act
         mockMvc.perform(get(ApiPaths.MILKS))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(2))
-                .andExpect(jsonPath("$[0].id").value(milkResponse.id().toString()))
-                .andExpect(jsonPath("$[0].upc").value(milkResponse.upc()))
-                .andExpect(jsonPath("$[1].id").value(response2.id().toString()))
-                .andExpect(jsonPath("$[1].upc").value(response2.upc()));
+                .andExpect(jsonPath("$.content.size()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(milkResponse.id().toString()))
+                .andExpect(jsonPath("$.content[0].upc").value(milkResponse.upc()))
+                .andExpect(jsonPath("$.content[1].id").value(response2.id().toString()))
+                .andExpect(jsonPath("$.content[1].upc").value(response2.upc()));
 
         // Assert
-        verify(milkService).list(null, null);
+        verify(milkService).list(isNull(), isNull(), any(Pageable.class));
     }
 
     @Test
@@ -183,48 +188,55 @@ public class MilkControllerTest {
         milk2.setName("Select Semi Skimmed");
         MilkResponse response2 = TestDataFactory.newMilkResponse(TestDataFactory.newSavedMilk(milk2));
 
-        List<MilkResponse> responseList = List.of(response1, response2);
+        Pageable pageable = PageRequest.of(0, 20);
 
-        given(milkService.list("skimmed", null)).willReturn(responseList);
+        Page<MilkResponse> responseList = new PageImpl<>(List.of(response1, response2));
+
+        given(milkService.list("skimmed", null, pageable)).willReturn(responseList);
 
         // Act
         mockMvc.perform(get(ApiPaths.MILKS)
                         .param("name", "skimmed")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(2))
-                .andExpect(jsonPath("$[0].id").value(response1.id().toString()))
-                .andExpect(jsonPath("$[0].name").value(response1.name()));
+                .andExpect(jsonPath("$.content.size()").value(2))
+                .andExpect(jsonPath("$.content[0].id").value(response1.id().toString()))
+                .andExpect(jsonPath("$.content[0].name").value(response1.name()));
 
         // Assert
-        verify(milkService).list("skimmed", null);
+        verify(milkService).list("skimmed", null, pageable);
     }
 
     @Test
     void listMilksByType_returns200_andArray_whenExists() throws Exception {
         // Arrange
-        List<MilkResponse> responseList = List.of(milkResponse);
-        given(milkService.list(null, MilkType.SEMI_SKIMMED)).willReturn(responseList);
+        Pageable pageable = PageRequest.of(0, 20);
+
+        Page<MilkResponse> responseList = new PageImpl<>(List.of(milkResponse));
+
+        given(milkService.list(null, MilkType.SEMI_SKIMMED, pageable)).willReturn(responseList);
 
         // Act
         mockMvc.perform(get(ApiPaths.MILKS)
                         .param("milkType", "SEMI_SKIMMED")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(1))
-                .andExpect(jsonPath("$[0].id").value(milkResponse.id().toString()))
-                .andExpect(jsonPath("$[0].milkType").value(String.valueOf(milkResponse.milkType())));
+                .andExpect(jsonPath("$.content.size()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(milkResponse.id().toString()))
+                .andExpect(jsonPath("$.content[0].milkType").value(String.valueOf(milkResponse.milkType())));
 
         // Assert
-        verify(milkService).list(null, MilkType.SEMI_SKIMMED);
+        verify(milkService).list(null, MilkType.SEMI_SKIMMED, pageable);
     }
 
     @Test
     void listMilksByNameAndType_returns200_andArray_whenExists() throws Exception {
         // Arrange
-        List<MilkResponse> responseList = List.of(milkResponse);
+        Pageable pageable = PageRequest.of(0, 20);
 
-        given(milkService.list("Milk name", MilkType.SEMI_SKIMMED)).willReturn(responseList);
+        Page<MilkResponse> responseList = new PageImpl<>(List.of(milkResponse));
+
+        given(milkService.list("Milk name", MilkType.SEMI_SKIMMED, pageable)).willReturn(responseList);
 
         // Act
         mockMvc.perform(get(ApiPaths.MILKS)
@@ -232,27 +244,29 @@ public class MilkControllerTest {
                         .param("milkType", "SEMI_SKIMMED")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(1))
-                .andExpect(jsonPath("$[0].id").value(milkResponse.id().toString()))
-                .andExpect(jsonPath("$[0].name").value(milkResponse.name()))
-                .andExpect(jsonPath("$[0].milkType").value(String.valueOf(milkResponse.milkType())));
+                .andExpect(jsonPath("$.content.size()").value(1))
+                .andExpect(jsonPath("$.content[0].id").value(milkResponse.id().toString()))
+                .andExpect(jsonPath("$.content[0].name").value(milkResponse.name()))
+                .andExpect(jsonPath("$.content[0].milkType").value(String.valueOf(milkResponse.milkType())));
 
         // Assert
-        verify(milkService).list("Milk name", MilkType.SEMI_SKIMMED);
+        verify(milkService).list("Milk name", MilkType.SEMI_SKIMMED, pageable);
     }
 
     @Test
     void listMilks_returns200_andEmptyArray_whenNotExists() throws Exception {
         // Arrange
-        given(milkService.list(null, null)).willReturn(Collections.emptyList());
+        Pageable pageable = PageRequest.of(0, 20);
+
+        given(milkService.list(null, null, pageable)).willReturn(Page.empty());
 
         // Act
         mockMvc.perform(get(ApiPaths.MILKS))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.size()").value(0));
+                .andExpect(jsonPath("$.content.size()").value(0));
 
         // Assert
-        verify(milkService).list(null, null);
+        verify(milkService).list(null, null, pageable);
     }
 
     @Test

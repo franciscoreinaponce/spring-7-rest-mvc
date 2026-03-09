@@ -17,8 +17,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +29,6 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -127,19 +129,21 @@ public class MilkServiceImplTest {
     void list_returnsList_whenMilksExist() {
         // Arrange
         Milk savedMilk2 = TestDataFactory.newSavedMilk(TestDataFactory.newMilk());
-        given(milkRepository.findAll()).willReturn(List.of(savedMilk, savedMilk2));
+        Pageable pageable = PageRequest.of(0, 20);
+
+        given(milkRepository.findAll(pageable)).willReturn(new PageImpl<>(List.of(savedMilk, savedMilk2)));
         given(milkMapper.toResponse(savedMilk)).willReturn(TestDataFactory.newMilkResponse(savedMilk));
         given(milkMapper.toResponse(savedMilk2)).willReturn(TestDataFactory.newMilkResponse(savedMilk2));
 
         // Act
-        List<MilkResponse> milkResponseList = milkService.list(null, null);
+        Page<MilkResponse> milkResponseList = milkService.list(null, null, pageable);
 
         // Assert
         assertThat(milkResponseList).hasSize(2);
-        assertThat(milkResponseList.getFirst().upc()).isEqualTo(savedMilk.getUpc());
-        assertThat(milkResponseList.getLast().upc()).isEqualTo(savedMilk2.getUpc());
+        assertThat(milkResponseList.getContent().getFirst().upc()).isEqualTo(savedMilk.getUpc());
+        assertThat(milkResponseList.getContent().getLast().upc()).isEqualTo(savedMilk2.getUpc());
 
-        verify(milkRepository).findAll();
+        verify(milkRepository).findAll(pageable);
         verify(milkMapper, times(1)).toResponse(savedMilk);
         verify(milkMapper, times(1)).toResponse(savedMilk2);
     }
@@ -148,34 +152,40 @@ public class MilkServiceImplTest {
     void listByName_returnsList_whenMilksExist() {
         // Arrange
         savedMilk.setName("Skimmed name");
-        given(milkRepository.findAllByNameContainingIgnoreCase(anyString())).willReturn(List.of(savedMilk));
+        Pageable pageable = PageRequest.of(0, 20);
+
+        given(milkRepository.findAllByNameContainingIgnoreCase("Skimmed", pageable))
+                .willReturn(new PageImpl<>(List.of(savedMilk)));
         given(milkMapper.toResponse(savedMilk)).willReturn(TestDataFactory.newMilkResponse(savedMilk));
 
         // Act
-        List<MilkResponse> milkResponseList = milkService.list("Skimmed", null);
+        Page<MilkResponse> milkResponseList = milkService.list("Skimmed", null, pageable);
 
         // Assert
         assertThat(milkResponseList).hasSize(1);
-        assertThat(milkResponseList.getFirst().name()).isEqualTo(savedMilk.getName());
+        assertThat(milkResponseList.getContent().getFirst().name()).isEqualTo(savedMilk.getName());
 
-        verify(milkRepository).findAllByNameContainingIgnoreCase("Skimmed");
+        verify(milkRepository).findAllByNameContainingIgnoreCase("Skimmed", pageable);
         verify(milkMapper, times(1)).toResponse(savedMilk);
     }
 
     @Test
     void listByType_returnsList_whenMilksExist() {
         // Arrange
-        given(milkRepository.findAllByMilkType(any(MilkType.class))).willReturn(List.of(savedMilk));
+        Pageable pageable = PageRequest.of(0, 20);
+
+        given(milkRepository.findAllByMilkType(MilkType.SEMI_SKIMMED, pageable))
+                .willReturn(new PageImpl<>(List.of(savedMilk)));
         given(milkMapper.toResponse(savedMilk)).willReturn(TestDataFactory.newMilkResponse(savedMilk));
 
         // Act
-        List<MilkResponse> milkResponseList = milkService.list(null, MilkType.SEMI_SKIMMED);
+        Page<MilkResponse> milkResponseList = milkService.list(null, MilkType.SEMI_SKIMMED, pageable);
 
         // Assert
-        assertThat(milkResponseList).hasSize(1);
-        assertThat(milkResponseList.getFirst().milkType()).isEqualTo(savedMilk.getMilkType());
+        assertThat(milkResponseList.getContent()).hasSize(1);
+        assertThat(milkResponseList.getContent().getFirst().milkType()).isEqualTo(savedMilk.getMilkType());
 
-        verify(milkRepository).findAllByMilkType(MilkType.SEMI_SKIMMED);
+        verify(milkRepository).findAllByMilkType(MilkType.SEMI_SKIMMED, pageable);
         verify(milkMapper, times(1)).toResponse(savedMilk);
     }
 
@@ -183,22 +193,24 @@ public class MilkServiceImplTest {
     void listByNameAndType_returnsList_whenMilksExist() {
         // Arrange Milk name
         Milk savedMilk2 = TestDataFactory.newSavedMilk(TestDataFactory.newMilk());
-        given(milkRepository.findAllByNameContainingIgnoreCaseAndMilkType(anyString(), any(MilkType.class)))
-                .willReturn(List.of(savedMilk, savedMilk2));
+        Pageable pageable = PageRequest.of(0, 20);
+
+        given(milkRepository.findAllByNameContainingIgnoreCaseAndMilkType("Milk name", MilkType.SEMI_SKIMMED, pageable))
+                .willReturn(new PageImpl<>(List.of(savedMilk, savedMilk2)));
         given(milkMapper.toResponse(savedMilk)).willReturn(TestDataFactory.newMilkResponse(savedMilk));
         given(milkMapper.toResponse(savedMilk2)).willReturn(TestDataFactory.newMilkResponse(savedMilk2));
 
         // Act
-        List<MilkResponse> milkResponseList = milkService.list("Milk name", MilkType.SEMI_SKIMMED);
+        Page<MilkResponse> milkResponseList = milkService.list("Milk name", MilkType.SEMI_SKIMMED, pageable);
 
         // Assert
         assertThat(milkResponseList).hasSize(2);
-        assertThat(milkResponseList.getFirst().name()).isEqualTo(savedMilk.getName());
-        assertThat(milkResponseList.getFirst().milkType()).isEqualTo(savedMilk.getMilkType());
-        assertThat(milkResponseList.getLast().name()).isEqualTo(savedMilk2.getName());
-        assertThat(milkResponseList.getLast().milkType()).isEqualTo(savedMilk2.getMilkType());
+        assertThat(milkResponseList.getContent().getFirst().name()).isEqualTo(savedMilk.getName());
+        assertThat(milkResponseList.getContent().getFirst().milkType()).isEqualTo(savedMilk.getMilkType());
+        assertThat(milkResponseList.getContent().getLast().name()).isEqualTo(savedMilk2.getName());
+        assertThat(milkResponseList.getContent().getLast().milkType()).isEqualTo(savedMilk2.getMilkType());
 
-        verify(milkRepository).findAllByNameContainingIgnoreCaseAndMilkType("Milk name", MilkType.SEMI_SKIMMED);
+        verify(milkRepository).findAllByNameContainingIgnoreCaseAndMilkType("Milk name", MilkType.SEMI_SKIMMED, pageable);
         verify(milkMapper, times(1)).toResponse(savedMilk);
         verify(milkMapper, times(1)).toResponse(savedMilk2);
     }
@@ -206,15 +218,17 @@ public class MilkServiceImplTest {
     @Test
     void list_returnsEmptyList_whenNoMilks() {
         // Arrange
-        given(milkRepository.findAll()).willReturn(Collections.emptyList());
+        Pageable pageable = PageRequest.of(0, 20);
+
+        given(milkRepository.findAll(pageable)).willReturn(Page.empty());
 
         // Act
-        List<MilkResponse> milkResponseList = milkService.list(null, null);
+        Page<MilkResponse> milkResponseList = milkService.list(null, null, pageable);
 
         // Assert
-        assertThat(milkResponseList).isEmpty();
+        assertThat(milkResponseList.getContent()).isEmpty();
 
-        verify(milkRepository).findAll();
+        verify(milkRepository).findAll(pageable);
         verifyNoInteractions(milkMapper);
     }
 

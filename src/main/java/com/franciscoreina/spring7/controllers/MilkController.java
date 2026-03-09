@@ -9,6 +9,8 @@ import com.franciscoreina.spring7.dtos.milk.MilkUpdateRequest;
 import com.franciscoreina.spring7.services.MilkService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +24,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 @RequiredArgsConstructor
@@ -46,10 +47,11 @@ public class MilkController {
     }
 
     @GetMapping
-    public List<MilkResponse> list(
+    public Page<MilkResponse> list(
             @RequestParam(value = "name", required = false) String name,
-            @RequestParam(value = "milkType", required = false) MilkType milkType) {
-        return milkService.list(name, milkType);
+            @RequestParam(value = "milkType", required = false) MilkType milkType,
+            Pageable pageable) {
+        return milkService.list(name, milkType, pageable);
     }
 
     @PutMapping(ApiPaths.MILK_ID)

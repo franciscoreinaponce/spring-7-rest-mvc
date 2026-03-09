@@ -11,6 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -140,6 +142,8 @@ public class MilkRepositoryTest {
 
     @Test
     public void findAllByName_whenExists() {
+        Pageable pageable = PageRequest.of(0, 20);
+
         // Arrange
         Milk milk1 = TestDataFactory.newMilk();
         milk1.setName("Ultra-Fresh Skimmed");
@@ -158,7 +162,8 @@ public class MilkRepositoryTest {
         milkRepository.saveAndFlush(milk3);
 
         // Assert
-        assertThat(milkRepository.findAllByNameContainingIgnoreCase("skimmed").size()).isEqualTo(2);
+        assertThat(milkRepository.findAllByNameContainingIgnoreCase("skimmed", pageable)
+                .getContent().size()).isEqualTo(2);
     }
 
     @Test
@@ -169,13 +174,16 @@ public class MilkRepositoryTest {
         Milk milk3 = TestDataFactory.newMilk();
         milk3.setMilkType(MilkType.A2);
 
+        Pageable pageable = PageRequest.of(0, 20);
+
         // Act
         milkRepository.saveAndFlush(milk1);
         milkRepository.saveAndFlush(milk2);
         milkRepository.saveAndFlush(milk3);
 
         // Assert
-        assertThat(milkRepository.findAllByMilkType(MilkType.A2).size()).isEqualTo(1);
+        assertThat(milkRepository.findAllByMilkType(MilkType.A2, pageable)
+                .getContent().size()).isEqualTo(1);
     }
 
     @Test
@@ -192,14 +200,16 @@ public class MilkRepositoryTest {
         milk3.setName("Natural A2");
         milk3.setMilkType(MilkType.A2);
 
+        Pageable pageable = PageRequest.of(0, 20);
+
         // Act
         milkRepository.saveAndFlush(milk1);
         milkRepository.saveAndFlush(milk2);
         milkRepository.saveAndFlush(milk3);
 
         // Assert
-        assertThat(milkRepository.findAllByNameContainingIgnoreCaseAndMilkType("skimmed", MilkType.SKIMMED).size())
-                .isEqualTo(1);
+        assertThat(milkRepository.findAllByNameContainingIgnoreCaseAndMilkType("skimmed", MilkType.SKIMMED, pageable)
+                .getContent().size()).isEqualTo(1);
     }
 
     // ---------------

@@ -25,6 +25,7 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -147,18 +148,14 @@ public class MilkIT extends AbstractIntegrationTest {
         // Act + Assert
         getRequest(ApiPaths.MILKS)
                 .expectStatus().isOk()
-                .expectBodyList(MilkResponse.class)
-                .value(milkResponseList -> {
-                    assertThat(milkResponseList).isNotNull();
-                    assertThat(milkResponseList).hasSize(2);
-                    assertThat(milkResponseList).allSatisfy(milk -> {
-                        assertThat(milk.id()).isNotNull();
-                        assertThat(milk.name()).isNotBlank();
-                        assertThat(milk.milkType()).isNotNull();
-                        assertThat(milk.price()).isNotNull();
-                        assertThat(milk.stock()).isNotNull();
-                    });
-                });
+                .expectBody()
+                .jsonPath("$.content").isArray()
+                .jsonPath("$.content.length()").isEqualTo(2)
+                .jsonPath("$.content[*].id").isNotEmpty()
+                .jsonPath("$.content[*].name").isNotEmpty()
+                .jsonPath("$.content[*].milkType").isNotEmpty()
+                .jsonPath("$.content[*].price").isNotEmpty()
+                .jsonPath("$.content[*].stock").isNotEmpty();
     }
 
     @Test
@@ -174,11 +171,11 @@ public class MilkIT extends AbstractIntegrationTest {
         // Act + Assert
         getRequest(ApiPaths.MILKS, Map.of("name", "a2"))
                 .expectStatus().isOk()
-                .expectBodyList(MilkResponse.class)
-                .value(milkResponseList -> {
-                    assertThat(milkResponseList).hasSize(1);
-                    assertThat(milkResponseList.getFirst().name().contains("a2"));
-                });
+                .expectBody()
+                .jsonPath("$.content").isArray()
+                .jsonPath("$.content.length()").isEqualTo(1)
+                .jsonPath("$.content[0].name")
+                .value(name -> assertThat(name.toString().toLowerCase()).contains(("a2")));
     }
 
     @Test
@@ -193,11 +190,10 @@ public class MilkIT extends AbstractIntegrationTest {
         // Act + Assert
         getRequest(ApiPaths.MILKS, Map.of("milkType", "A2"))
                 .expectStatus().isOk()
-                .expectBodyList(MilkResponse.class)
-                .value(milkResponseList -> {
-                    assertThat(milkResponseList).hasSize(1);
-                    assertThat(milkResponseList.getFirst().milkType()).isEqualTo(MilkType.A2);
-                });
+                .expectBody()
+                .jsonPath("$.content").isArray()
+                .jsonPath("$.content.length()").isEqualTo(1)
+                .jsonPath("$.content[0].milkType").isEqualTo(MilkType.A2);
     }
 
     @Test
@@ -213,12 +209,25 @@ public class MilkIT extends AbstractIntegrationTest {
         // Act + Assert
         getRequest(ApiPaths.MILKS, Map.of("name", "natural", "milkType", "A2"))
                 .expectStatus().isOk()
-                .expectBodyList(MilkResponse.class)
-                .value(milkResponseList -> {
-                    assertThat(milkResponseList).hasSize(1);
-                    assertThat(milkResponseList.getFirst().name().contains("a2"));
-                    assertThat(milkResponseList.getFirst().milkType()).isEqualTo(MilkType.A2);
-                });
+                .expectBody()
+                .jsonPath("$.content.length()").isEqualTo(1)
+                .jsonPath("$.content[0].name")
+                .value(name -> assertThat(name.toString().toLowerCase()).contains("a2"))
+                .jsonPath("$.content[0].milkType").isEqualTo(MilkType.A2);
+    }
+
+    @Test
+    void listByNameAndTypeUsingPage1_whenMilksExists_returnsDataList() throws FileNotFoundException {
+        // Arrange
+        dataFactory.loadMilkCsvDataset();
+
+        // Act + Assert
+        getRequest(ApiPaths.MILKS, Map.of("name", "skimmed", "milkType", "SKIMMED",
+                "page", "1", "size", "50"))
+                .expectStatus().isOk()
+                .expectBody()
+                .jsonPath("$.content").isArray()
+                .jsonPath("$.content.length()").isEqualTo(12);
     }
 
     @Test
@@ -226,10 +235,8 @@ public class MilkIT extends AbstractIntegrationTest {
         // Act + Assert
         getRequest(ApiPaths.MILKS)
                 .expectStatus().isOk()
-                .expectBodyList(MilkResponse.class)
-                .value(milkResponseList -> {
-                    assertThat(milkResponseList).isEmpty();
-                });
+                .expectBody()
+                .jsonPath("$.content.length()").isEqualTo(0);
     }
 
     // ---------------

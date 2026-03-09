@@ -2,17 +2,18 @@ package com.franciscoreina.spring7.repositories;
 
 import com.franciscoreina.spring7.domain.Milk;
 import com.franciscoreina.spring7.domain.MilkType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface MilkRepository extends JpaRepository<Milk, UUID> {
 
-    List<Milk> findAllByNameContainingIgnoreCase(String name);
+    Page<Milk> findAllByNameContainingIgnoreCase(String name, Pageable pageable);
 
-    List<Milk> findAllByMilkType(MilkType milkType);
+    Page<Milk> findAllByMilkType(MilkType milkType, Pageable pageable);
 
-    List<Milk> findAllByNameContainingIgnoreCaseAndMilkType(String name, MilkType milkType);
+    Page<Milk> findAllByNameContainingIgnoreCaseAndMilkType(String name, MilkType milkType, Pageable pageable);
 
 }
