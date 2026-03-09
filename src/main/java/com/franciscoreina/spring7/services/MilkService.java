@@ -1,5 +1,6 @@
 package com.franciscoreina.spring7.services;
 
+import com.franciscoreina.spring7.domain.MilkType;
 import com.franciscoreina.spring7.dtos.milk.MilkCreateRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkPatchRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkResponse;
@@ -14,7 +15,7 @@ public interface MilkService {
 
     MilkResponse getById(UUID milkId);
 
-    List<MilkResponse> list();
+    List<MilkResponse> list(String name, MilkType milkType);
 
     void update(UUID milkId, MilkUpdateRequest request);
 

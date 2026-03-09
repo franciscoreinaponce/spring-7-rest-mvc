@@ -2,6 +2,7 @@ package com.franciscoreina.spring7.integration;
 
 import com.franciscoreina.spring7.api.ApiPaths;
 import com.franciscoreina.spring7.domain.Milk;
+import com.franciscoreina.spring7.domain.MilkType;
 import com.franciscoreina.spring7.dtos.milk.MilkCreateRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkPatchRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkResponse;
@@ -25,6 +26,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -156,6 +158,66 @@ public class MilkIT extends AbstractIntegrationTest {
                         assertThat(milk.price()).isNotNull();
                         assertThat(milk.stock()).isNotNull();
                     });
+                });
+    }
+
+    @Test
+    void listByName_whenMilksExists_returnsDataList() {
+        // Arrange
+        dataFactory.persistTwoMilks(); // SEMI_SKIMMED milk types
+
+        Milk milk3 = TestDataFactory.newMilk();
+        milk3.setName("Natural A2");
+        milk3.setMilkType(MilkType.A2);
+        milkRepository.saveAndFlush(milk3);
+
+        // Act + Assert
+        getRequest(ApiPaths.MILKS, Map.of("name", "a2"))
+                .expectStatus().isOk()
+                .expectBodyList(MilkResponse.class)
+                .value(milkResponseList -> {
+                    assertThat(milkResponseList).hasSize(1);
+                    assertThat(milkResponseList.getFirst().name().contains("a2"));
+                });
+    }
+
+    @Test
+    void listByType_whenMilksExists_returnsDataList() {
+        // Arrange
+        dataFactory.persistTwoMilks(); // SEMI_SKIMMED milk types
+
+        Milk third = TestDataFactory.newMilk();
+        third.setMilkType(MilkType.A2);
+        milkRepository.saveAndFlush(third);
+
+        // Act + Assert
+        getRequest(ApiPaths.MILKS, Map.of("milkType", "A2"))
+                .expectStatus().isOk()
+                .expectBodyList(MilkResponse.class)
+                .value(milkResponseList -> {
+                    assertThat(milkResponseList).hasSize(1);
+                    assertThat(milkResponseList.getFirst().milkType()).isEqualTo(MilkType.A2);
+                });
+    }
+
+    @Test
+    void listByNameAndType_whenMilksExists_returnsDataList() {
+        // Arrange
+        dataFactory.persistTwoMilks(); // SEMI_SKIMMED milk types
+
+        Milk milk3 = TestDataFactory.newMilk();
+        milk3.setName("Natural A2");
+        milk3.setMilkType(MilkType.A2);
+        milkRepository.saveAndFlush(milk3);
+
+        // Act + Assert
+        getRequest(ApiPaths.MILKS, Map.of("name", "natural", "milkType", "A2"))
+                .expectStatus().isOk()
+                .expectBodyList(MilkResponse.class)
+                .value(milkResponseList -> {
+                    assertThat(milkResponseList).hasSize(1);
+                    assertThat(milkResponseList.getFirst().name().contains("a2"));
+                    assertThat(milkResponseList.getFirst().milkType()).isEqualTo(MilkType.A2);
                 });
     }
 

@@ -3,6 +3,10 @@ package com.franciscoreina.spring7.integration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.util.UriBuilder;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.Map;
 
 public abstract class AbstractIntegrationTest {
 
@@ -21,8 +25,12 @@ public abstract class AbstractIntegrationTest {
     }
 
     protected WebTestClient.ResponseSpec getRequest(String uri) {
+        return getRequest(uri, Map.of());
+    }
+
+    protected WebTestClient.ResponseSpec getRequest(String uri, Map<String, String> queryParams) {
         return webTestClient.get()
-                .uri(uri)
+                .uri(uriBuilder(uri, queryParams))
                 .accept(JSON)
                 .exchange();
     }
@@ -50,5 +58,11 @@ public abstract class AbstractIntegrationTest {
                 .uri(uri)
                 .accept(JSON)
                 .exchange();
+    }
+
+    private static String uriBuilder(String uri, Map<String, String> queryParams) {
+        UriBuilder uriBuilder = UriComponentsBuilder.fromPath(uri);
+        queryParams.forEach(uriBuilder::queryParam);
+        return uriBuilder.build().toString();
     }
 }

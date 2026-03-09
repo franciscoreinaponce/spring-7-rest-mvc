@@ -1,6 +1,7 @@
 package com.franciscoreina.spring7.services;
 
 import com.franciscoreina.spring7.domain.Milk;
+import com.franciscoreina.spring7.domain.MilkType;
 import com.franciscoreina.spring7.dtos.milk.MilkCreateRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkPatchRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkResponse;
@@ -35,8 +36,32 @@ public class MilkServiceImpl implements MilkService {
     }
 
     @Override
-    public List<MilkResponse> list() {
-        return milkRepository.findAll().stream().map(milkMapper::toResponse).toList();
+    public List<MilkResponse> list(String name, MilkType milkType) {
+        if (name != null && milkType != null) { // Search by name and milkType
+            return milkRepository.findAllByNameContainingIgnoreCaseAndMilkType(name, milkType)
+                    .stream()
+                    .map(milkMapper::toResponse)
+                    .toList();
+        }
+
+        if (name != null) { // Search by name
+            return milkRepository.findAllByNameContainingIgnoreCase(name)
+                    .stream()
+                    .map(milkMapper::toResponse)
+                    .toList();
+        }
+
+        if (milkType != null) { // Search by milkType
+            return milkRepository.findAllByMilkType(milkType)
+                    .stream()
+                    .map(milkMapper::toResponse)
+                    .toList();
+        }
+
+        return milkRepository.findAll() // Search all
+                .stream()
+                .map(milkMapper::toResponse)
+                .toList();
     }
 
     @Transactional

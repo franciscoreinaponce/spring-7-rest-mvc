@@ -1,6 +1,7 @@
 package com.franciscoreina.spring7.services;
 
 import com.franciscoreina.spring7.domain.Milk;
+import com.franciscoreina.spring7.domain.MilkType;
 import com.franciscoreina.spring7.dtos.milk.MilkCreateRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkPatchRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkResponse;
@@ -25,6 +26,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -130,7 +132,7 @@ public class MilkServiceImplTest {
         given(milkMapper.toResponse(savedMilk2)).willReturn(TestDataFactory.newMilkResponse(savedMilk2));
 
         // Act
-        List<MilkResponse> milkResponseList = milkService.list();
+        List<MilkResponse> milkResponseList = milkService.list(null, null);
 
         // Assert
         assertThat(milkResponseList).hasSize(2);
@@ -143,12 +145,71 @@ public class MilkServiceImplTest {
     }
 
     @Test
+    void listByName_returnsList_whenMilksExist() {
+        // Arrange
+        savedMilk.setName("Skimmed name");
+        given(milkRepository.findAllByNameContainingIgnoreCase(anyString())).willReturn(List.of(savedMilk));
+        given(milkMapper.toResponse(savedMilk)).willReturn(TestDataFactory.newMilkResponse(savedMilk));
+
+        // Act
+        List<MilkResponse> milkResponseList = milkService.list("Skimmed", null);
+
+        // Assert
+        assertThat(milkResponseList).hasSize(1);
+        assertThat(milkResponseList.getFirst().name()).isEqualTo(savedMilk.getName());
+
+        verify(milkRepository).findAllByNameContainingIgnoreCase("Skimmed");
+        verify(milkMapper, times(1)).toResponse(savedMilk);
+    }
+
+    @Test
+    void listByType_returnsList_whenMilksExist() {
+        // Arrange
+        given(milkRepository.findAllByMilkType(any(MilkType.class))).willReturn(List.of(savedMilk));
+        given(milkMapper.toResponse(savedMilk)).willReturn(TestDataFactory.newMilkResponse(savedMilk));
+
+        // Act
+        List<MilkResponse> milkResponseList = milkService.list(null, MilkType.SEMI_SKIMMED);
+
+        // Assert
+        assertThat(milkResponseList).hasSize(1);
+        assertThat(milkResponseList.getFirst().milkType()).isEqualTo(savedMilk.getMilkType());
+
+        verify(milkRepository).findAllByMilkType(MilkType.SEMI_SKIMMED);
+        verify(milkMapper, times(1)).toResponse(savedMilk);
+    }
+
+    @Test
+    void listByNameAndType_returnsList_whenMilksExist() {
+        // Arrange Milk name
+        Milk savedMilk2 = TestDataFactory.newSavedMilk(TestDataFactory.newMilk());
+        given(milkRepository.findAllByNameContainingIgnoreCaseAndMilkType(anyString(), any(MilkType.class)))
+                .willReturn(List.of(savedMilk, savedMilk2));
+        given(milkMapper.toResponse(savedMilk)).willReturn(TestDataFactory.newMilkResponse(savedMilk));
+        given(milkMapper.toResponse(savedMilk2)).willReturn(TestDataFactory.newMilkResponse(savedMilk2));
+
+        // Act
+        List<MilkResponse> milkResponseList = milkService.list("Milk name", MilkType.SEMI_SKIMMED);
+
+        // Assert
+        assertThat(milkResponseList).hasSize(2);
+        assertThat(milkResponseList.getFirst().name()).isEqualTo(savedMilk.getName());
+        assertThat(milkResponseList.getFirst().milkType()).isEqualTo(savedMilk.getMilkType());
+        assertThat(milkResponseList.getLast().name()).isEqualTo(savedMilk2.getName());
+        assertThat(milkResponseList.getLast().milkType()).isEqualTo(savedMilk2.getMilkType());
+
+        verify(milkRepository).findAllByNameContainingIgnoreCaseAndMilkType("Milk name", MilkType.SEMI_SKIMMED);
+        verify(milkMapper, times(1)).toResponse(savedMilk);
+        verify(milkMapper, times(1)).toResponse(savedMilk2);
+    }
+
+    @Test
     void list_returnsEmptyList_whenNoMilks() {
         // Arrange
         given(milkRepository.findAll()).willReturn(Collections.emptyList());
 
         // Act
-        List<MilkResponse> milkResponseList = milkService.list();
+        List<MilkResponse> milkResponseList = milkService.list(null, null);
 
         // Assert
         assertThat(milkResponseList).isEmpty();

@@ -2,6 +2,7 @@ package com.franciscoreina.spring7.controllers;
 
 import com.franciscoreina.spring7.api.ApiPaths;
 import com.franciscoreina.spring7.domain.Milk;
+import com.franciscoreina.spring7.domain.MilkType;
 import com.franciscoreina.spring7.dtos.milk.MilkCreateRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkPatchRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkResponse;
@@ -155,7 +156,7 @@ public class MilkControllerTest {
         MilkResponse response2 = TestDataFactory.newMilkResponse(savedMilk2);
         List<MilkResponse> responseList = List.of(milkResponse, response2);
 
-        given(milkService.list()).willReturn(responseList);
+        given(milkService.list(null, null)).willReturn(responseList);
 
         // Act
         mockMvc.perform(get(ApiPaths.MILKS))
@@ -167,13 +168,83 @@ public class MilkControllerTest {
                 .andExpect(jsonPath("$[1].upc").value(response2.upc()));
 
         // Assert
-        verify(milkService).list();
+        verify(milkService).list(null, null);
+    }
+
+    @Test
+    void listMilksByName_returns200_andArray_whenExists() throws Exception {
+        // Arrange
+        Milk milk1 = TestDataFactory.newMilk();
+        milk1.setName("Ultra-Fresh Skimmed");
+        milk1.setMilkType(MilkType.SKIMMED);
+        MilkResponse response1 = TestDataFactory.newMilkResponse(TestDataFactory.newSavedMilk(milk1));
+
+        Milk milk2 = TestDataFactory.newMilk();
+        milk2.setName("Select Semi Skimmed");
+        MilkResponse response2 = TestDataFactory.newMilkResponse(TestDataFactory.newSavedMilk(milk2));
+
+        List<MilkResponse> responseList = List.of(response1, response2);
+
+        given(milkService.list("skimmed", null)).willReturn(responseList);
+
+        // Act
+        mockMvc.perform(get(ApiPaths.MILKS)
+                        .param("name", "skimmed")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(2))
+                .andExpect(jsonPath("$[0].id").value(response1.id().toString()))
+                .andExpect(jsonPath("$[0].name").value(response1.name()));
+
+        // Assert
+        verify(milkService).list("skimmed", null);
+    }
+
+    @Test
+    void listMilksByType_returns200_andArray_whenExists() throws Exception {
+        // Arrange
+        List<MilkResponse> responseList = List.of(milkResponse);
+        given(milkService.list(null, MilkType.SEMI_SKIMMED)).willReturn(responseList);
+
+        // Act
+        mockMvc.perform(get(ApiPaths.MILKS)
+                        .param("milkType", "SEMI_SKIMMED")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(1))
+                .andExpect(jsonPath("$[0].id").value(milkResponse.id().toString()))
+                .andExpect(jsonPath("$[0].milkType").value(String.valueOf(milkResponse.milkType())));
+
+        // Assert
+        verify(milkService).list(null, MilkType.SEMI_SKIMMED);
+    }
+
+    @Test
+    void listMilksByNameAndType_returns200_andArray_whenExists() throws Exception {
+        // Arrange
+        List<MilkResponse> responseList = List.of(milkResponse);
+
+        given(milkService.list("Milk name", MilkType.SEMI_SKIMMED)).willReturn(responseList);
+
+        // Act
+        mockMvc.perform(get(ApiPaths.MILKS)
+                        .param("name", "Milk name")
+                        .param("milkType", "SEMI_SKIMMED")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.size()").value(1))
+                .andExpect(jsonPath("$[0].id").value(milkResponse.id().toString()))
+                .andExpect(jsonPath("$[0].name").value(milkResponse.name()))
+                .andExpect(jsonPath("$[0].milkType").value(String.valueOf(milkResponse.milkType())));
+
+        // Assert
+        verify(milkService).list("Milk name", MilkType.SEMI_SKIMMED);
     }
 
     @Test
     void listMilks_returns200_andEmptyArray_whenNotExists() throws Exception {
         // Arrange
-        given(milkService.list()).willReturn(Collections.emptyList());
+        given(milkService.list(null, null)).willReturn(Collections.emptyList());
 
         // Act
         mockMvc.perform(get(ApiPaths.MILKS))
@@ -181,7 +252,7 @@ public class MilkControllerTest {
                 .andExpect(jsonPath("$.size()").value(0));
 
         // Assert
-        verify(milkService).list();
+        verify(milkService).list(null, null);
     }
 
     @Test

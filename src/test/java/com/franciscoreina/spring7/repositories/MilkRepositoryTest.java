@@ -2,6 +2,7 @@ package com.franciscoreina.spring7.repositories;
 
 import com.franciscoreina.spring7.config.JpaConfig;
 import com.franciscoreina.spring7.domain.Milk;
+import com.franciscoreina.spring7.domain.MilkType;
 import com.franciscoreina.spring7.testdata.TestDataFactory;
 import jakarta.persistence.EntityManager;
 import jakarta.validation.ConstraintViolationException;
@@ -135,6 +136,70 @@ public class MilkRepositoryTest {
 
         // Assert
         assertThat(milkRepository.count()).isEqualTo(3);
+    }
+
+    @Test
+    public void findAllByName_whenExists() {
+        // Arrange
+        Milk milk1 = TestDataFactory.newMilk();
+        milk1.setName("Ultra-Fresh Skimmed");
+        milk1.setMilkType(MilkType.SKIMMED);
+
+        Milk milk2 = TestDataFactory.newMilk();
+        milk2.setName("Select Semi Skimmed");
+
+        Milk milk3 = TestDataFactory.newMilk();
+        milk3.setName("Natural A2");
+        milk3.setMilkType(MilkType.A2);
+
+        // Act
+        milkRepository.saveAndFlush(milk1);
+        milkRepository.saveAndFlush(milk2);
+        milkRepository.saveAndFlush(milk3);
+
+        // Assert
+        assertThat(milkRepository.findAllByNameContainingIgnoreCase("skimmed").size()).isEqualTo(2);
+    }
+
+    @Test
+    public void findAllMilksByType_whenExists() {
+        // Arrange
+        Milk milk1 = TestDataFactory.newMilk(); // SEMI_SKIMMED milk type
+        Milk milk2 = TestDataFactory.newMilk(); // SEMI_SKIMMED milk type
+        Milk milk3 = TestDataFactory.newMilk();
+        milk3.setMilkType(MilkType.A2);
+
+        // Act
+        milkRepository.saveAndFlush(milk1);
+        milkRepository.saveAndFlush(milk2);
+        milkRepository.saveAndFlush(milk3);
+
+        // Assert
+        assertThat(milkRepository.findAllByMilkType(MilkType.A2).size()).isEqualTo(1);
+    }
+
+    @Test
+    public void findAllByNameAndMilkType_whenExists() {
+        // Arrange
+        Milk milk1 = TestDataFactory.newMilk();
+        milk1.setName("Ultra-Fresh Skimmed");
+        milk1.setMilkType(MilkType.SKIMMED);
+
+        Milk milk2 = TestDataFactory.newMilk(); // SEMI_SKIMMED milk type
+        milk2.setName("Select Semi Skimmed");
+
+        Milk milk3 = TestDataFactory.newMilk();
+        milk3.setName("Natural A2");
+        milk3.setMilkType(MilkType.A2);
+
+        // Act
+        milkRepository.saveAndFlush(milk1);
+        milkRepository.saveAndFlush(milk2);
+        milkRepository.saveAndFlush(milk3);
+
+        // Assert
+        assertThat(milkRepository.findAllByNameContainingIgnoreCaseAndMilkType("skimmed", MilkType.SKIMMED).size())
+                .isEqualTo(1);
     }
 
     // ---------------

@@ -1,6 +1,7 @@
 package com.franciscoreina.spring7.controllers;
 
 import com.franciscoreina.spring7.api.ApiPaths;
+import com.franciscoreina.spring7.domain.MilkType;
 import com.franciscoreina.spring7.dtos.milk.MilkCreateRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkPatchRequest;
 import com.franciscoreina.spring7.dtos.milk.MilkResponse;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -44,8 +46,10 @@ public class MilkController {
     }
 
     @GetMapping
-    public List<MilkResponse> list() {
-        return milkService.list();
+    public List<MilkResponse> list(
+            @RequestParam(value = "name", required = false) String name,
+            @RequestParam(value = "milkType", required = false) MilkType milkType) {
+        return milkService.list(name, milkType);
     }
 
     @PutMapping(ApiPaths.MILK_ID)
