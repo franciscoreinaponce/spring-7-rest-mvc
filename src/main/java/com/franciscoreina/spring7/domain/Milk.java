@@ -49,7 +49,7 @@ public class Milk {
 
     @NotBlank
     @Size(max = 50)
-    @Column(nullable = false, length = 50, precision = 12, scale = 2)
+    @Column(nullable = false, length = 50)
     private String name;
 
     @NotNull
@@ -65,6 +65,7 @@ public class Milk {
     @NotNull
     @DecimalMin("0.00")
     @Digits(integer = 10, fraction = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal price;
 
     @NotNull
