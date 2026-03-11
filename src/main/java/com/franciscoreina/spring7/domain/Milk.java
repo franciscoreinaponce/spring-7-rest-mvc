@@ -8,6 +8,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -28,6 +31,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -86,4 +90,20 @@ public class Milk {
     @OneToMany(mappedBy = "milk")
     private Set<MilkOrderLine> milkOrderLines;
 
+    @Builder.Default
+    @ManyToMany
+    @JoinTable(name = "milk_category",
+            joinColumns = @JoinColumn(name = "milk_id"),
+            inverseJoinColumns = @JoinColumn(name = "category_id"))
+    private Set<Category> categories = new HashSet<>();
+
+    public void addCategory(Category category) {
+        categories.add(category);
+        category.getMilkSet().add(this);
+    }
+
+    public void removeCategory(Category category) {
+        categories.remove(category);
+        category.getMilkSet().remove(this);
+    }
 }

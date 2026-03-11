@@ -4,6 +4,7 @@ spring:
     properties:
       hibernate:
         show_sql: false     # Log SQL statements
+        format_sql: false   # Format SQL output in logs
 
 #      jakarta:
 #        persistence:

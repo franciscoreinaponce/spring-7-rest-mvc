@@ -1,14 +1,12 @@
 package com.franciscoreina.spring7.domain;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
@@ -24,7 +22,6 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.Set;
 import java.util.UUID;
 
 @Builder
@@ -34,8 +31,8 @@ import java.util.UUID;
 @Setter
 @EntityListeners(AuditingEntityListener.class)
 @Entity
-@Table(name = "milk_order")
-public class MilkOrder {
+@Table(name = "milk_order_shipment")
+public class MilkOrderShipment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -47,8 +44,8 @@ public class MilkOrder {
 
     @NotBlank
     @Size(max = 50)
-    @Column(nullable = false, length = 5, unique = true)
-    private String customerRef;
+    @Column(nullable = false, length = 50)
+    private String trackingNumber;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -58,17 +55,17 @@ public class MilkOrder {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    private Customer customer;
+    @OneToOne
+    @JoinColumn(name = "milk_order_id")
+    private MilkOrder milkOrder;
 
-    @OneToMany(mappedBy = "milkOrder")
-    private Set<MilkOrderLine> milkOrderLines;
+    public void addMilkOrder(MilkOrder order) {
+        order.setMilkOrderShipment(this);
+    }
 
-    @OneToOne(mappedBy = "milkOrder", cascade = CascadeType.PERSIST)
-    private MilkOrderShipment milkOrderShipment;
-
-    public void addMilkOrderShipment(MilkOrderShipment orderShipment) {
-        orderShipment.setMilkOrder(this);
+    @Override
+    public int hashCode() {
+        return super.hashCode();
     }
 
 }
